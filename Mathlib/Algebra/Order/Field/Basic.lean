@@ -248,7 +248,7 @@ theorem div_nat_lt_self_of_pos_of_two_le (ha : 0 < a) {n : ℕ} (hn : 2 ≤ n) :
 /-! ### Results about `IsGLB` -/
 
 
-theorem IsGLB.mul_left {s : Set α} (ha : 0 ≤ a) (hs : IsGLB s b) :
+theorem IsGLB.mul_left_nonneg {s : Set α} (ha : 0 ≤ a) (hs : IsGLB s b) :
     IsGLB ((fun b => a * b) '' s) (a * b) := by
   rcases lt_or_eq_of_le ha with (ha | rfl)
   · exact (OrderIso.mulLeft₀ _ ha).isGLB_image'.2 hs
@@ -256,13 +256,13 @@ theorem IsGLB.mul_left {s : Set α} (ha : 0 ≤ a) (hs : IsGLB s b) :
     rw [hs.nonempty.image_const]
     exact isGLB_singleton
 
-theorem IsGLB.mul_right {s : Set α} (ha : 0 ≤ a) (hs : IsGLB s b) :
-    IsGLB ((fun b => b * a) '' s) (b * a) := by simpa [mul_comm] using hs.mul_left ha
+theorem IsGLB.mul_right_nonneg {s : Set α} (ha : 0 ≤ a) (hs : IsGLB s b) :
+    IsGLB ((fun b => b * a) '' s) (b * a) := by simpa [mul_comm] using hs.mul_left_nonneg ha
 
 /-! ### Results about `IsLUB` -/
 
 
-theorem IsLUB.mul_left {s : Set α} (ha : 0 ≤ a) (hs : IsLUB s b) :
+theorem IsLUB.mul_left_nonneg {s : Set α} (ha : 0 ≤ a) (hs : IsLUB s b) :
     IsLUB ((fun b => a * b) '' s) (a * b) := by
   obtain ha | rfl := ha.lt_or_eq
   · exact (OrderIso.mulLeft₀ _ ha).isLUB_image'.2 hs
@@ -275,8 +275,8 @@ theorem IsLUB.mul_left {s : Set α} (ha : 0 ≤ a) (hs : IsLUB s b) :
     rw [ne.image_const]
     exact isLUB_singleton
 
-theorem IsLUB.mul_right {s : Set α} (ha : 0 ≤ a) (hs : IsLUB s b) :
-    IsLUB ((fun b => b * a) '' s) (b * a) := by simpa [mul_comm] using hs.mul_left ha
+theorem IsLUB.mul_right_nonneg {s : Set α} (ha : 0 ≤ a) (hs : IsLUB s b) :
+    IsLUB ((fun b => b * a) '' s) (b * a) := by simpa [mul_comm] using hs.mul_left_nonneg ha
 
 end PartialOrderedSemifield
 

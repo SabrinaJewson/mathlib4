@@ -5,6 +5,7 @@ Authors: Yury Kudryashov, Johannes Hölzl
 -/
 module
 
+public import Mathlib.Order.Bounds.LUBOfMinUB
 public import Mathlib.Order.ConditionallyCompleteLattice.Basic
 public import Mathlib.Order.RelIso.Basic
 
@@ -85,6 +86,45 @@ protected theorem iterate {f : α → α} (hf : LeftOrdContinuous f) (n : ℕ) :
   match n with
   | 0 => LeftOrdContinuous.id α
   | (n + 1) => (LeftOrdContinuous.iterate hf n).comp hf
+
+/-- If the function that reduces `f`'s codomain to the upper closure of its range is the left
+adjoint of some Galois connection, then `f` is left-continuous. -/
+@[to_dual
+/-- If the function that reduces `f`'s codomain to the lower closure of its range is the right
+adjoint of some Galois connection, then `f` is right-continuous. -/
+]
+theorem of_forall_exists (hf : ∀ b, (∃ a, f a ≤ b) → ∃ a, ∀ x, f x ≤ b ↔ x ≤ a) :
+    LeftOrdContinuous f where
+  isLUB_image _s x hs hx :=
+    ⟨fun _ ⟨a, ha, heq⟩ ↦ heq.symm.trans_le <|
+      have ⟨_b, hb⟩ := hf (f x) ⟨x, le_refl _⟩
+      (hb a).mpr ((hx.1 ha).trans ((hb x).mp le_rfl)),
+    fun ub hub ↦
+      have ⟨_a, ha⟩ := hf ub (hs.imp fun x hx ↦ hub ⟨x, hx, rfl⟩)
+      (ha x).mpr (hx.2 (fun y hy ↦ (ha y).mp (hub ⟨y, hy, rfl⟩)))⟩
+
+/-- If the function that reduces `f`'s codomain to the intersection of the upper and lower closure
+of its range is the left adjoint of some Galois connection, then `f` is left-continuous.
+
+Similar to `of_forall_exists`, but also provides upper bounds in the case of a conditionally
+complete lattice or linear order. -/
+@[to_dual
+/-- If the function that reduces `f`'s codomain to the intersection of the upper and lower closure
+of its range is the right adjoint of some Galois connection, then `f` is right-continuous.
+
+Similar to `of_forall_exists`, but also provides lower bounds in the case of a conditionally
+complete lattice or linear order. -/
+]
+theorem of_forall_bounded_exists [LUBOfMinUB β]
+    (hf : ∀ b, (∃ a, f a ≤ b) → (∃ a, b ≤ f a) → ∃ a, ∀ x, f x ≤ b ↔ x ≤ a) :
+    LeftOrdContinuous f where
+  isLUB_image _s x hs hx := .of_minimal_ub (.image _ hs)
+    (fun _ ⟨a, ha, heq⟩ ↦ heq.symm.trans_le <|
+      have ⟨_b, hb⟩ := hf (f x) ⟨x, le_rfl⟩ ⟨x, le_rfl⟩
+      (hb a).mpr ((hx.1 ha).trans ((hb x).mp le_rfl)))
+    (fun ub hub ub_le ↦
+      have ⟨_a, ha⟩ := hf ub (hs.imp fun x hx ↦ hub ⟨x, hx, rfl⟩) ⟨x, ub_le⟩
+      (ha x).mpr (hx.2 (fun y hy ↦ (ha y).mp (hub ⟨y, hy, rfl⟩))))
 
 end Preorder
 

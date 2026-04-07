@@ -5728,6 +5728,7 @@ public import Mathlib.Order.BoundedOrder.Monotone
 public import Mathlib.Order.Bounds.Basic
 public import Mathlib.Order.Bounds.Defs
 public import Mathlib.Order.Bounds.Image
+public import Mathlib.Order.Bounds.LUBOfMinUB
 public import Mathlib.Order.Bounds.Lattice
 public import Mathlib.Order.Bounds.OrderIso
 public import Mathlib.Order.BourbakiWitt

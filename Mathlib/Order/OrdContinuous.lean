@@ -37,14 +37,9 @@ open Function OrderDual Set
 /-- A function `f` between preorders is left order continuous if it preserves all suprema of
 nonempty sets. We define it using `IsLUB` instead of `sSup` so that the proof works both for
 complete lattices and conditionally complete lattices. -/
-structure LeftOrdContinuous [Preorder α] [Preorder β] (f : α → β) : Prop where
-  isLUB_image : ∀ ⦃s : Set α⦄ ⦃x⦄, s.Nonempty → IsLUB s x → IsLUB (f '' s) (f x)
-
-/-- A function `f` between preorders is right order continuous if it preserves all infima of
-nonempty sets.  We define it using `IsGLB` instead of `sInf` so that the proof works both for
-complete lattices and conditionally complete lattices. -/
-structure RightOrdContinuous [Preorder α] [Preorder β] (f : α → β) : Prop where
-  isGLB_image : ∀ ⦃s : Set α⦄ ⦃x⦄, s.Nonempty → IsGLB s x → IsGLB (f '' s) (f x)
+@[to_dual RightOrdContinuous]
+def LeftOrdContinuous [Preorder α] [Preorder β] (f : α → β) : Prop :=
+  ∀ ⦃s : Set α⦄ ⦃x⦄, s.Nonempty → IsLUB s x → IsLUB (f '' s) (f x)
 
 namespace LeftOrdContinuous
 
@@ -52,27 +47,37 @@ section Preorder
 
 variable (α) [Preorder α] [Preorder β] [Preorder γ] {g : β → γ} {f : α → β}
 
-protected theorem id : LeftOrdContinuous (id : α → α) where
-  isLUB_image s _ x h := by simpa only [image_id] using h
+@[to_dual]
+protected theorem id : LeftOrdContinuous (id : α → α) :=
+  fun s _ x h ↦ by simpa only [image_id] using h
 
 variable {α}
 
-protected theorem rightOrdContinuous_dual (h : LeftOrdContinuous f) :
-    RightOrdContinuous (toDual ∘ f ∘ ofDual) where
-  isGLB_image := h.isLUB_image
+@[to_dual]
+theorem isLUB_image (h : LeftOrdContinuous f) {s : Set α} {x : α}
+    (hs : s.Nonempty) (hx : IsLUB s x) : IsLUB (f '' s) (f x) :=
+  h hs hx
 
+@[to_dual orderDual]
+protected theorem rightOrdContinuous_dual (h : LeftOrdContinuous f) :
+    RightOrdContinuous (toDual ∘ f ∘ ofDual) :=
+  h
+
+@[to_dual]
 theorem map_isGreatest (hf : LeftOrdContinuous f) {s : Set α} {x : α} (h : IsGreatest s x) :
     IsGreatest (f '' s) (f x) :=
   ⟨mem_image_of_mem f h.1, (hf.isLUB_image ⟨x, h.1⟩ h.isLUB).1⟩
 
+@[to_dual]
 theorem mono (hf : LeftOrdContinuous f) : Monotone f := fun a₁ a₂ h =>
   have : IsGreatest {a₁, a₂} a₂ := ⟨Or.inr rfl, by simp [*]⟩
   (hf.map_isGreatest this).2 <| mem_image_of_mem _ (Or.inl rfl)
 
-theorem comp (hg : LeftOrdContinuous g) (hf : LeftOrdContinuous f) : LeftOrdContinuous (g ∘ f) where
-  isLUB_image s x hs h := by
-    simpa only [image_image] using hg.isLUB_image (.image _ hs) (hf.isLUB_image hs h)
+@[to_dual]
+theorem comp (hg : LeftOrdContinuous g) (hf : LeftOrdContinuous f) : LeftOrdContinuous (g ∘ f) :=
+  fun s x hs h ↦ by simpa only [image_image] using hg (.image _ hs) (hf hs h)
 
+@[to_dual]
 protected theorem iterate {f : α → α} (hf : LeftOrdContinuous f) (n : ℕ) :
     LeftOrdContinuous f^[n] :=
   match n with
@@ -85,24 +90,28 @@ section SemilatticeSup
 
 variable [SemilatticeSup α] [SemilatticeSup β] {f : α → β}
 
+@[to_dual]
 theorem map_sup (hf : LeftOrdContinuous f) (x y : α) : f (x ⊔ y) = f x ⊔ f y :=
   (hf.isLUB_image (insert_nonempty ..) isLUB_pair).unique <| by simp only [image_pair, isLUB_pair]
 
+@[to_dual]
 theorem le_iff (hf : LeftOrdContinuous f) (h : Injective f) {x y} : f x ≤ f y ↔ x ≤ y := by
   simp only [← sup_eq_right, ← hf.map_sup, h.eq_iff]
 
+@[to_dual]
 theorem lt_iff (hf : LeftOrdContinuous f) (h : Injective f) {x y} : f x < f y ↔ x < y := by
   simp only [lt_iff_le_not_ge, hf.le_iff h]
 
 variable (f)
 
 /-- Convert an injective left order continuous function to an order embedding. -/
+@[to_dual]
 def toOrderEmbedding (hf : LeftOrdContinuous f) (h : Injective f) : α ↪o β :=
   ⟨⟨f, h⟩, hf.le_iff h⟩
 
 variable {f}
 
-@[simp]
+@[to_dual (attr := simp)]
 theorem coe_toOrderEmbedding (hf : LeftOrdContinuous f) (h : Injective f) :
     ⇑(hf.toOrderEmbedding f h) = f :=
   rfl
@@ -113,6 +122,7 @@ section CompleteLattice
 
 variable [CompleteLattice α] [CompleteLattice β] {f : α → β}
 
+@[to_dual]
 theorem map_sSup' (hf : LeftOrdContinuous f) {s : Set α} (hs : s.Nonempty) :
     f (sSup s) = sSup (f '' s) :=
   (hf.isLUB_image hs <| isLUB_sSup s).sSup_eq.symm
@@ -146,63 +156,6 @@ end ConditionallyCompleteLattice
 end LeftOrdContinuous
 
 namespace RightOrdContinuous
-
-section Preorder
-
-variable (α) [Preorder α] [Preorder β] [Preorder γ] {g : β → γ} {f : α → β}
-
-protected theorem id : RightOrdContinuous (id : α → α) where
-  isGLB_image s _ x h := by simpa only [image_id] using h
-
-variable {α}
-
-protected theorem orderDual (h : RightOrdContinuous f) :
-    LeftOrdContinuous (toDual ∘ f ∘ ofDual) where
-  isLUB_image := h.isGLB_image
-
-theorem map_isLeast (hf : RightOrdContinuous f) {s : Set α} {x : α} (h : IsLeast s x) :
-    IsLeast (f '' s) (f x) :=
-  hf.orderDual.map_isGreatest h
-
-theorem mono (hf : RightOrdContinuous f) : Monotone f :=
-  hf.orderDual.mono.dual
-
-theorem comp (hg : RightOrdContinuous g) (hf : RightOrdContinuous f) : RightOrdContinuous (g ∘ f) :=
-  (hg.orderDual.comp hf.orderDual).rightOrdContinuous_dual
-
-protected theorem iterate {f : α → α} (hf : RightOrdContinuous f) (n : ℕ) :
-    RightOrdContinuous f^[n] :=
-  (hf.orderDual.iterate n).rightOrdContinuous_dual
-
-end Preorder
-
-section SemilatticeInf
-
-variable [SemilatticeInf α] [SemilatticeInf β] {f : α → β}
-
-theorem map_inf (hf : RightOrdContinuous f) (x y : α) : f (x ⊓ y) = f x ⊓ f y :=
-  hf.orderDual.map_sup x y
-
-theorem le_iff (hf : RightOrdContinuous f) (h : Injective f) {x y} : f x ≤ f y ↔ x ≤ y :=
-  hf.orderDual.le_iff h
-
-theorem lt_iff (hf : RightOrdContinuous f) (h : Injective f) {x y} : f x < f y ↔ x < y :=
-  hf.orderDual.lt_iff h
-
-variable (f)
-
-/-- Convert an injective left order continuous function to an `OrderEmbedding`. -/
-def toOrderEmbedding (hf : RightOrdContinuous f) (h : Injective f) : α ↪o β :=
-  ⟨⟨f, h⟩, hf.le_iff h⟩
-
-variable {f}
-
-@[simp]
-theorem coe_toOrderEmbedding (hf : RightOrdContinuous f) (h : Injective f) :
-    ⇑(hf.toOrderEmbedding f h) = f :=
-  rfl
-
-end SemilatticeInf
 
 section CompleteLattice
 
@@ -242,12 +195,12 @@ namespace GaloisConnection
 variable [Preorder α] [Preorder β] {f : α → β} {g : β → α}
 
 /-- A left adjoint in a Galois connection is left-continuous in the order-theoretic sense. -/
-lemma leftOrdContinuous (gc : GaloisConnection f g) : LeftOrdContinuous f where
-  isLUB_image _ _ _ := gc.isLUB_l_image
+lemma leftOrdContinuous (gc : GaloisConnection f g) : LeftOrdContinuous f :=
+  fun _ _ _ ↦ gc.isLUB_l_image
 
 /-- A right adjoint in a Galois connection is right-continuous in the order-theoretic sense. -/
-lemma rightOrdContinuous (gc : GaloisConnection f g) : RightOrdContinuous g where
-  isGLB_image _ _ _ := gc.isGLB_u_image
+lemma rightOrdContinuous (gc : GaloisConnection f g) : RightOrdContinuous g :=
+  fun _ _ _ ↦ gc.isGLB_u_image
 
 end GaloisConnection
 
